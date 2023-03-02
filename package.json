@@ -1,0 +1,16 @@
+{
+  "name": "drag-and-drop-app",
+  "version": "1.0.0",
+  "description": "Drag and Drop (todo list) app",
+  "main": "app.js",
+  "scripts": {
+    "start": "live-server"
+  },
+  "keywords": [
+    "typescript"
+  ],
+  "author": "Saleh Abbasi",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  }
+}
