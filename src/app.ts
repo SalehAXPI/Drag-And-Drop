@@ -1,3 +1,38 @@
+// Project data interface
+interface UserData {
+  title: string;
+  description: string;
+  peopleNum: number;
+}
+
+// Project state management
+// (Singleton Class)
+class ProjectState {
+  private projects: any[] = [];
+  private static instance: ProjectState;
+
+  private constructor() {}
+
+  static getInstance() {
+    if (this.instance) return this.instance;
+    this.instance = new ProjectState();
+    return this.instance;
+  }
+
+  addProject(dataObj: UserData) {
+    const newProj = {
+      id: Math.round(Math.random() * 1_000_000_000),
+      title: dataObj.title,
+      description: dataObj.description,
+      people: dataObj.peopleNum,
+    };
+    this.projects.push(newProj);
+    console.log(this.projects);
+  }
+}
+
+const projectState: ProjectState = <ProjectState>ProjectState.getInstance();
+
 // AutoBind Decorator
 const AutoBind = (_: any, _2: string, descriptor: PropertyDescriptor) => {
   // set return type to PropertyDescriptor for typescript identify it and change original descriptor with this
@@ -102,19 +137,19 @@ class ProjectInput {
 
     if (validation(this)) {
       this.clearInputs();
-      console.log(userInputs);
+      projectState.addProject(userInputs);
       return;
     }
 
     alert("Invalid input, please try again!");
   }
 
-  private gatherUserInput(): [string, string, number] {
-    return [
-      this.titleInputEl.value,
-      this.descriptionInputEl.value,
-      +this.peopleInputEl.value,
-    ];
+  private gatherUserInput(): UserData {
+    return {
+      title: this.titleInputEl.value,
+      description: this.descriptionInputEl.value,
+      peopleNum: +this.peopleInputEl.value,
+    };
   }
 
   private clearInputs() {
