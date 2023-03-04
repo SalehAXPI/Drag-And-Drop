@@ -8,6 +8,7 @@ interface UserData {
 // Project state management
 // (Singleton Class)
 class ProjectState {
+  private listeners: any[] = [];
   private projects: any[] = [];
   private static instance: ProjectState;
 
@@ -27,7 +28,12 @@ class ProjectState {
       people: dataObj.peopleNum,
     };
     this.projects.push(newProj);
-    console.log(this.projects);
+    this.listeners.forEach((listenerFn) => listenerFn(this.projects.slice()));
+  }
+
+  addListener(listener: Function) {
+    console.log(this.listeners);
+    this.listeners.push(listener);
   }
 }
 
@@ -173,8 +179,15 @@ class ProjectList {
     document.importNode(this.tempEl.content, true).firstElementChild
   );
 
+  assignedProjects: any[] = [];
+
   constructor(private type: "active" | "finished") {
     this.element.id = `${this.type}-projects`;
+
+    projectState.addListener((projects: any[]) => {
+      this.assignedProjects = projects;
+      this.renderProj();
+    });
 
     // Insert Element in HTML
     this.attach();
@@ -191,6 +204,18 @@ class ProjectList {
     this.element.querySelector(
       "h2"
     )!.textContent = `${this.type.toUpperCase()} PROJECTS`;
+  }
+
+  private renderProj() {
+    const listEl: HTMLElement = <HTMLElement>(
+      document.getElementById(`${this.type}-projects`)
+    );
+    listEl.innerHTML = "";
+    this.assignedProjects.forEach((prjItem) => {
+      const listItem = document.createElement("li");
+      listItem.textContent = prjItem.title;
+      listEl.appendChild(listItem);
+    });
   }
 }
 
