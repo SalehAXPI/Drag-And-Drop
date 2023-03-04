@@ -1,15 +1,24 @@
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+
 // Project data interface
-interface UserData {
+interface ProjectData {
+  id: string;
   title: string;
   description: string;
   peopleNum: number;
+  status: ProjectStatus;
 }
+
+type Listener = (items: ProjectData[]) => void;
 
 // Project state management
 // (Singleton Class)
 class ProjectState {
-  private listeners: any[] = [];
-  private projects: any[] = [];
+  private listeners: Listener[] = [];
+  private projects: ProjectData[] = [];
   private static instance: ProjectState;
 
   private constructor() {}
@@ -20,19 +29,19 @@ class ProjectState {
     return this.instance;
   }
 
-  addProject(dataObj: UserData) {
-    const newProj = {
-      id: Math.round(Math.random() * 1_000_000_000),
+  addProject(dataObj: ProjectData) {
+    const newProj: ProjectData = {
+      id: dataObj.id,
       title: dataObj.title,
       description: dataObj.description,
-      people: dataObj.peopleNum,
+      peopleNum: dataObj.peopleNum,
+      status: dataObj.status,
     };
     this.projects.push(newProj);
     this.listeners.forEach((listenerFn) => listenerFn(this.projects.slice()));
   }
 
-  addListener(listener: Function) {
-    console.log(this.listeners);
+  addListener(listener: Listener) {
     this.listeners.push(listener);
   }
 }
@@ -150,11 +159,13 @@ class ProjectInput {
     alert("Invalid input, please try again!");
   }
 
-  private gatherUserInput(): UserData {
+  private gatherUserInput(): ProjectData {
     return {
+      id: Math.round(Math.random() * 1_000_000_000).toString(),
       title: this.titleInputEl.value,
       description: this.descriptionInputEl.value,
       peopleNum: +this.peopleInputEl.value,
+      status: ProjectStatus.Active,
     };
   }
 
@@ -179,21 +190,21 @@ class ProjectList {
     document.importNode(this.tempEl.content, true).firstElementChild
   );
 
-  assignedProjects: any[] = [];
+  assignedProjects: ProjectData[] = [];
 
   constructor(private type: "active" | "finished") {
     this.element.id = `${this.type}-projects`;
-
-    projectState.addListener((projects: any[]) => {
-      this.assignedProjects = projects;
-      this.renderProj();
-    });
 
     // Insert Element in HTML
     this.attach();
 
     // Render Content
     this.renderContent();
+
+    projectState.addListener((projects: ProjectData[]) => {
+      this.assignedProjects = projects;
+      this.renderProj();
+    });
   }
 
   private attach() {
@@ -201,20 +212,26 @@ class ProjectList {
   }
 
   private renderContent() {
+    const listContainer = <HTMLElement>(
+      document.getElementById(`${this.element.id}`)
+    );
+    listContainer.querySelector("ul")!.id = `${this.type}-projects-list`;
+
     this.element.querySelector(
       "h2"
     )!.textContent = `${this.type.toUpperCase()} PROJECTS`;
   }
 
   private renderProj() {
-    const listEl: HTMLElement = <HTMLElement>(
-      document.getElementById(`${this.type}-projects`)
+    const projContainer = <HTMLElement>(
+      document.getElementById(`${this.type}-projects-list`)
     );
-    listEl.innerHTML = "";
+    projContainer.innerHTML = "";
+
     this.assignedProjects.forEach((prjItem) => {
       const listItem = document.createElement("li");
       listItem.textContent = prjItem.title;
-      listEl.appendChild(listItem);
+      projContainer.appendChild(listItem);
     });
   }
 }
