@@ -12,18 +12,27 @@ interface ProjectData {
   status: ProjectStatus;
 }
 
-type Listener = (items: ProjectData[]) => void;
-
 type Insert = "afterbegin" | "beforeend";
 
 // Project state management
+type Listener<T> = (items: T[]) => void;
+
+class State<T> {
+  protected listeners: Listener<T>[] = [];
+
+  addListener(listener: Listener<T>) {
+    this.listeners.push(listener);
+  }
+}
+
 // (Singleton Class)
-class ProjectState {
-  private listeners: Listener[] = [];
+class ProjectState extends State<ProjectData> {
   private projects: ProjectData[] = [];
   private static instance: ProjectState;
 
-  private constructor() {}
+  private constructor() {
+    super();
+  }
 
   static getInstance() {
     if (this.instance) return this.instance;
@@ -41,10 +50,6 @@ class ProjectState {
     };
     this.projects.push(newProj);
     this.listeners.forEach((listenerFn) => listenerFn(this.projects.slice()));
-  }
-
-  addListener(listener: Listener) {
-    this.listeners.push(listener);
   }
 }
 
