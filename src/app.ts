@@ -14,6 +14,8 @@ interface ProjectData {
 
 type Listener = (items: ProjectData[]) => void;
 
+type Insert = "afterbegin" | "beforeend";
+
 // Project state management
 // (Singleton Class)
 class ProjectState {
@@ -106,43 +108,58 @@ const validation = (inputValues: any): boolean => {
   // return true;
 };
 
-class ProjectInput {
-  // Type Casting
-  tempEl: HTMLTemplateElement = <HTMLTemplateElement>(
-    document.getElementById("project-input")
-  );
+// Component Base Class
+abstract class Component<T extends HTMLElement, U extends HTMLElement> {
+  tempEl: HTMLTemplateElement;
+  hostEl: T;
+  element: U;
 
-  hostEl: HTMLDivElement = document.getElementById("app") as HTMLDivElement;
+  constructor(
+    tempElId: string,
+    hostElId: string,
+    insert: Insert,
+    newElId?: string
+  ) {
+    this.tempEl = <HTMLTemplateElement>document.getElementById(tempElId);
+    const importedNode = document.importNode(this.tempEl.content, true);
+    this.element = <U>importedNode.firstElementChild;
 
-  formEl: HTMLFormElement = document.importNode(this.tempEl.content, true)
-    .firstElementChild as HTMLFormElement;
+    if (newElId) this.element.id = newElId;
 
+    this.hostEl = <T>document.getElementById(hostElId);
+
+    this.attach(insert);
+  }
+
+  private attach(insert: Insert) {
+    this.hostEl.insertAdjacentElement(insert, this.element);
+  }
+
+  abstract configure(): void;
+}
+
+class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   @TitleMaxLength @Required titleInputEl: HTMLInputElement = <HTMLInputElement>(
-    this.formEl.querySelector("#title")
+    this.element.querySelector("#title")
   );
 
   @DescMaxLength @Required descriptionInputEl: HTMLInputElement = <
     HTMLInputElement
-  >this.formEl.querySelector("#description");
+  >this.element.querySelector("#description");
 
   peopleInputEl: HTMLInputElement = <HTMLInputElement>(
-    this.formEl.querySelector("#people")
+    this.element.querySelector("#people")
   );
 
   constructor() {
-    // Insert Form to HTML
-    this.attach();
+    super("project-input", "app", "afterbegin");
 
     // Add Submit Button Listener for Submission
-    this.configSubmission();
+    this.configure();
   }
 
-  private attach() {
-    this.hostEl.insertAdjacentElement("afterbegin", this.formEl);
-  }
-
-  private configSubmission() {
-    this.formEl.addEventListener("submit", this.submitHandler);
+  configure() {
+    this.element.addEventListener("submit", this.submitHandler);
   }
 
   @AutoBind
@@ -171,48 +188,25 @@ class ProjectInput {
 
   private clearInputs() {
     [
-      Array.from(this.formEl.querySelectorAll("input")),
-      Array.from(this.formEl.querySelectorAll("textarea")),
+      Array.from(this.element.querySelectorAll("input")),
+      Array.from(this.element.querySelectorAll("textarea")),
     ]
       .flat()
       .map((el) => (el.value = ""));
   }
 }
 
-class ProjectList {
-  tempEl: HTMLTemplateElement = <HTMLTemplateElement>(
-    document.getElementById("project-list")
-  );
-
-  hostEl: HTMLDivElement = document.getElementById("app") as HTMLDivElement;
-
-  element: HTMLElement = <HTMLElement>(
-    document.importNode(this.tempEl.content, true).firstElementChild
-  );
-
+class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   assignedProjects: ProjectData[] = [];
 
   constructor(private type: "active" | "finished") {
-    this.element.id = `${this.type}-projects`;
-
-    // Insert Element in HTML
-    this.attach();
+    super("project-list", "app", "beforeend", `${type}-projects`);
 
     // Render Content
     this.renderContent();
 
-    projectState.addListener((projects: ProjectData[]) => {
-      this.assignedProjects = projects.filter((prj) => {
-        return this.type === "active"
-          ? prj.status === ProjectStatus.Active
-          : prj.status === ProjectStatus.Finished;
-      });
-      this.renderProj();
-    });
-  }
-
-  private attach() {
-    this.hostEl.insertAdjacentElement("beforeend", this.element);
+    // Render Projects
+    this.configure();
   }
 
   private renderContent() {
@@ -236,6 +230,17 @@ class ProjectList {
       const listItem = document.createElement("li");
       listItem.textContent = prjItem.title;
       projContainer.appendChild(listItem);
+    });
+  }
+
+  configure() {
+    projectState.addListener((projects: ProjectData[]) => {
+      this.assignedProjects = projects.filter((prj) => {
+        return this.type === "active"
+          ? prj.status === ProjectStatus.Active
+          : prj.status === ProjectStatus.Finished;
+      });
+      this.renderProj();
     });
   }
 }
