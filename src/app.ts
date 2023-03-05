@@ -119,7 +119,7 @@ abstract class Component<T extends HTMLElement, U extends HTMLElement> {
   hostEl: T;
   element: U;
 
-  constructor(
+  protected constructor(
     tempElId: string,
     hostElId: string,
     insert: Insert,
@@ -230,11 +230,8 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
       document.getElementById(`${this.type}-projects-list`)
     );
     projContainer.innerHTML = "";
-
     this.assignedProjects.forEach((prjItem) => {
-      const listItem = document.createElement("li");
-      listItem.textContent = prjItem.title;
-      projContainer.appendChild(listItem);
+      new ProjectItem(`${this.type}-projects-list`, prjItem.id, prjItem);
     });
   }
 
@@ -247,6 +244,37 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
       });
       this.renderProj();
     });
+  }
+}
+
+class ProjectItem extends Component<HTMLUListElement, HTMLElement> {
+  get persons() {
+    return this.project.peopleNum === 1
+      ? "1 Person Assigned"
+      : `${this.project.peopleNum} Persons Assigned`;
+  }
+
+  constructor(
+    protected hostId: string,
+    protected liId: string,
+    protected project: ProjectData
+  ) {
+    super("single-project", hostId, "beforeend", liId);
+
+    this.configure();
+  }
+
+  configure() {
+    const li = document.getElementById(this.liId)!;
+    li.insertAdjacentHTML("afterbegin", this.liElContent());
+  }
+
+  liElContent() {
+    return `
+    <h2>${this.project.title}</h2>
+    <h3>${this.project.description}</h3>
+    <p>${this.persons}</p>
+    `;
   }
 }
 
