@@ -202,7 +202,11 @@ class ProjectList {
     this.renderContent();
 
     projectState.addListener((projects: ProjectData[]) => {
-      this.assignedProjects = projects;
+      this.assignedProjects = projects.filter((prj) => {
+        return this.type === "active"
+          ? prj.status === ProjectStatus.Active
+          : prj.status === ProjectStatus.Finished;
+      });
       this.renderProj();
     });
   }
