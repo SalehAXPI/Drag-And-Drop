@@ -1,3 +1,21 @@
+// Interfaces for Drag & drop feature
+interface Draggable {
+  dragStartHandler(event: DragEvent): void;
+
+  dragEndHandler(event: DragEvent): void;
+}
+
+interface DragTarget {
+  // Check the place that drag is over on it is a target then we can use dropHandler
+  dragOverHandler(event: DragEvent): void;
+
+  // If drop happens:
+  dropHandler(event: DragEvent): void;
+
+  // If it canceled!
+  dragLeaveHandler(event: DragEvent): void;
+}
+
 enum ProjectStatus {
   Active,
   Finished,
@@ -247,7 +265,10 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   }
 }
 
-class ProjectItem extends Component<HTMLUListElement, HTMLElement> {
+class ProjectItem
+  extends Component<HTMLUListElement, HTMLElement>
+  implements Draggable
+{
   get persons() {
     return this.project.peopleNum === 1
       ? "1 Person Assigned"
@@ -260,21 +281,30 @@ class ProjectItem extends Component<HTMLUListElement, HTMLElement> {
     protected project: ProjectData
   ) {
     super("single-project", hostId, "beforeend", liId);
-
     this.configure();
+    this.renderContent();
+  }
+
+  @AutoBind
+  dragStartHandler(_: DragEvent) {
+    console.log("Drag Start!");
+  }
+
+  @AutoBind
+  dragEndHandler(_: DragEvent) {
+    console.log("Drag End");
   }
 
   configure() {
-    const li = document.getElementById(this.liId)!;
-    li.insertAdjacentHTML("afterbegin", this.liElContent());
+    this.element.addEventListener("dragstart", this.dragStartHandler);
+    this.element.addEventListener("dragend", this.dragEndHandler);
   }
 
-  liElContent() {
-    return `
-    <h2>${this.project.title}</h2>
-    <h3>${this.project.description}</h3>
-    <p>${this.persons}</p>
-    `;
+  renderContent() {
+    const li = document.getElementById(this.liId)!;
+    li.querySelector("h2")!.textContent = this.project.title;
+    li.querySelector("h3")!.textContent = this.project.description;
+    li.querySelector("p")!.textContent = this.project.peopleNum.toString();
   }
 }
 
