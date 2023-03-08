@@ -67,6 +67,18 @@ class ProjectState extends State<ProjectData> {
       status: dataObj.status,
     };
     this.projects.push(newProj);
+    this.updateListeners();
+  }
+
+  moveProject(prjId: string, newStatus: ProjectStatus) {
+    const project = this.projects.find((proj) => proj.id === prjId);
+    if (project && project.status !== newStatus) {
+      project.status = newStatus;
+      this.updateListeners();
+    }
+  }
+
+  updateListeners() {
     this.listeners.forEach((listenerFn) => listenerFn(this.projects.slice()));
   }
 }
@@ -219,7 +231,10 @@ class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   }
 }
 
-class ProjectList extends Component<HTMLDivElement, HTMLElement> {
+class ProjectList
+  extends Component<HTMLDivElement, HTMLElement>
+  implements DragTarget
+{
   assignedProjects: ProjectData[] = [];
 
   constructor(private type: "active" | "finished") {
@@ -230,6 +245,31 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
 
     // Render Projects
     this.configure();
+  }
+
+  @AutoBind
+  dragOverHandler(event: DragEvent) {
+    if (event.dataTransfer && event.dataTransfer.types[0] === "text/plain") {
+      event.preventDefault();
+      const listEl = <HTMLUListElement>this.element.querySelector("ul");
+      listEl.classList.add("droppable");
+    }
+  }
+
+  @AutoBind
+  dropHandler(event: DragEvent) {
+    const prjId = event.dataTransfer!.getData("text/plain");
+    projectState.moveProject(
+      prjId,
+      this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished
+    );
+  }
+
+  @AutoBind
+  dragLeaveHandler(_: DragEvent) {
+    const listEl = <HTMLUListElement>this.element.querySelector("ul");
+    listEl.classList.remove("droppable");
+    console.log("DRAG LEAVE!");
   }
 
   private renderContent() {
@@ -254,6 +294,10 @@ class ProjectList extends Component<HTMLDivElement, HTMLElement> {
   }
 
   configure() {
+    this.element.addEventListener("dragover", this.dragOverHandler);
+    this.element.addEventListener("dragleave", this.dragLeaveHandler);
+    this.element.addEventListener("drop", this.dropHandler);
+
     projectState.addListener((projects: ProjectData[]) => {
       this.assignedProjects = projects.filter((prj) => {
         return this.type === "active"
@@ -286,8 +330,9 @@ class ProjectItem
   }
 
   @AutoBind
-  dragStartHandler(_: DragEvent) {
-    console.log("Drag Start!");
+  dragStartHandler(event: DragEvent) {
+    event.dataTransfer!.setData("text/plain", this.project.id);
+    event.dataTransfer!.effectAllowed = "move";
   }
 
   @AutoBind
