@@ -1,13 +1,13 @@
-import { Component } from "./base-component.js";
-import { ProjectStatus, ProjectData } from "../models/project.js";
-import { projectState } from "../state/project-state.js";
+import { Component } from "./base-component";
+import { ProjectStatus, ProjectData } from "../models/project";
+import { projectState } from "../state/project-state";
 import {
   DescMaxLength,
   Required,
   TitleMaxLength,
   validation,
-} from "../decorators/validation.js";
-import { AutoBind } from "../decorators/autobind.js";
+} from "../decorators/validation";
+import { AutoBind } from "../decorators/autobind";
 
 export class ProjectInput extends Component<HTMLDivElement, HTMLFormElement> {
   @TitleMaxLength @Required titleInputEl: HTMLInputElement = <HTMLInputElement>(
