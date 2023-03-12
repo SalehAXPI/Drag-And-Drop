@@ -37,13 +37,18 @@ export class ProjectList
       prjId,
       this.type === "active" ? ProjectStatus.Active : ProjectStatus.Finished
     );
+    this.removeDroppable();
   }
 
   @AutoBind
   dragLeaveHandler(_: DragEvent) {
+    this.removeDroppable();
+    console.log("DRAG LEAVE!");
+  }
+
+  private removeDroppable() {
     const listEl = <HTMLUListElement>this.element.querySelector("ul");
     listEl.classList.remove("droppable");
-    console.log("DRAG LEAVE!");
   }
 
   private renderContent() {

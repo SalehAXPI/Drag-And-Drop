@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "start": "live-server",
-    "build": "webpack --config webpack.config.prod.js"
+    "build": "webpack --config webpack.config.js"
   },
   "keywords": [
     "typescript"

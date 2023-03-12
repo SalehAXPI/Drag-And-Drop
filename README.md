@@ -1,4 +1,4 @@
-## Drag and Drop
+# Drag and Drop
 
 Actually a todo app with some drag and drop feature coded with pure **TypeScript**.
 
